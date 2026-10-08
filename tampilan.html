@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aqsha Zhafif Aufa W. | Web Developer - PPLG SMKN 2 Surakarta</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Portofolio resmi Aqsha Zhafif Aufa Wibowo, Siswa PPLG A SMK Negeri 2 Surakarta. Web Developer dengan spesialisasi PHP, MySQL, React JS, dan Tailwind CSS." />
+  <meta name="author" content="Aqsha Zhafif Aufa Wibowo" />
+
+  <!-- Google Fonts: Inter, Outfit, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+
+  <!-- Material Symbols Outlined Icons -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & Babel Standalone CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0f131d;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #262a35;
+      border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #06b6d4;
+    }
+
+    /* Print Styles for CV Preview */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #cv-modal-content,
+      #cv-modal-content * {
+        visibility: visible;
+      }
+
+      #cv-modal-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 24px;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* TechText Component CSS (React Bits) */
+    .tech-text {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      touch-action: pan-y;
+      user-select: none;
+    }
+
+    .tech-text-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body class="bg-[#0f131d] text-[#dfe2f1] antialiased min-h-screen">
+  <div id="root"></div>
+
+  <!-- React App -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    /* ==========================================================================
+       TechText Component (from React Bits)
+       Variant: JavaScript + Canvas + CSS
+       ========================================================================== */
+    const LABEL_FONT = '10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    const FALLOFF_STEPS = 8;
+    const SPRING = 320;
+    const DAMPING = 22;
+
+    const approach = (current, target, dt, seconds) => current + (target - current) * (1 - Math.exp(-dt / seconds));
+
+    const hexToRgb = hex => {
+      let h = String(hex || '').replace('#', '');
+      if (h.length === 3) h = h.replace(/./g, c => c + c);
+      const n = parseInt(h.slice(0, 6), 16);
+      return Number.isNaN(n) ? [255, 255, 255] : [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    };
+
+    const rgba = (hex, alpha) => {
+      const [r, g, b] = hexToRgb(hex);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    const noise = (...values) => {
+      let h = 2166136261;
+      for (const value of values) {
+        h = Math.imul(h ^ (value | 0), 16777619);
+        h ^= h >>> 13;
+        h = Math.imul(h, 0x5bd1e995);
+        h ^= h >>> 15;
+      }
+      return (h >>> 0) / 4294967296;
+    };
+
+    const signed = value => (value > 0 ? `+${value}` : value < 0 ? `-${Math.abs(value)}` : '0');
+
+    const TechText = ({
+      text = 'React Bits',
+      fontFamily = '',
+      fontWeight = 600,
+      fontSize = 150,
+      letterSpacing = -0.05,
+      color = '#ffffff',
+      accentColor = '#ffffff',
+      reach = 200,
+      softness = 0.7,
+      dashLength = 4,
+      dashGap = 2,
+      strokeWidth = 1.5,
+      lineStyle = 'dashed',
+      reveal = 'letter',
+      specks = 15,
+      selection = true,
+      labels = true,
+      draggable = true,
+      sweep = true,
+      speed = 1,
+      className = '',
+      style
+    }) => {
+      const containerRef = useRef(null);
+      const canvasRef = useRef(null);
+      const settingsRef = useRef(null);
+      const wakeRef = useRef(() => {});
+
+      useEffect(() => {
+        settingsRef.current = {
+          text,
+          fontFamily,
+          fontWeight,
+          fontSize,
+          letterSpacing,
+          color,
+          accentColor,
+          reach,
+          softness,
+          dashLength,
+          dashGap,
+          strokeWidth,
+          lineStyle,
+          reveal,
+          specks,
+          selection,
+          labels,
+          draggable,
+          sweep,
+          speed
+        };
+        wakeRef.current();
+      });
+
+      useEffect(() => {
+        const container = containerRef.current;
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        const scratch = document.createElement('canvas');
+        const scratchCtx = scratch.getContext('2d');
+        if (!container || !canvas || !ctx || !scratchCtx) return undefined;
+
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        let width = 1;
+        let height = 1;
+        let dpr = 1;
+        let raf = 0;
+        let last = performance.now();
+        let visible = true;
+        let alive = true;
+        let layoutKey = '';
+        let requestedFont = '';
+        let word = null;
+        let glyphs = [];
+        let presence = 0;
+        let clock = 0;
+        let pulse = 0;
+        let placed = false;
+        let dragging = -1;
+        const pointer = { x: 0, y: 0, inside: false };
+        const grab = { x: 0, y: 0 };
+        const lens = { x: 0, y: 0 };
+        const frame = { x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0, index: -1 };
+
+        const refreshFonts = () => {
+          layoutKey = '';
+          wakeRef.current();
+        };
+
+        const family = s => s.fontFamily || getComputedStyle(container).fontFamily || 'sans-serif';
+        const fontFor = (s, size) => `${s.fontWeight} ${size}px ${family(s)}`;
+
+        const setFont = (target, s, size) => {
+          target.font = fontFor(s, size);
+          if ('letterSpacing' in target) target.letterSpacing = `${s.letterSpacing * size}px`;
+          target.textAlign = 'left';
+          target.textBaseline = 'alphabetic';
+        };
+
+        const sprite = (s, view, glyph, stroke) => {
+          const pad = Math.ceil(s.strokeWidth * 2 + 4);
+          const left = glyph.box.x1 - pad;
+          const top = glyph.box.y1 - pad;
+          const w = glyph.box.x2 - glyph.box.x1 + pad * 2;
+          const h = glyph.box.y2 - glyph.box.y1 + pad * 2;
+          const image = document.createElement('canvas');
+          image.width = Math.max(1, Math.ceil(w * dpr));
+          image.height = Math.max(1, Math.ceil(h * dpr));
+          const c = image.getContext('2d');
+          if (!c) return { image, left, top };
+          c.setTransform(dpr, 0, 0, dpr, -left * dpr, -top * dpr);
+          setFont(c, s, view.size);
+          if (stroke) {
+            c.lineJoin = 'round';
+            c.lineWidth = s.strokeWidth * 2;
+            c.lineCap = 'butt';
+            c.strokeStyle = s.color;
+            if (s.lineStyle !== 'solid') c.setLineDash([Math.max(1, s.dashLength), Math.max(1, s.dashGap)]);
+            c.strokeText(glyph.char, glyph.x, view.baseline);
+            c.setLineDash([]);
+            c.globalCompositeOperation = 'destination-out';
+            c.fillStyle = '#000000';
+            c.fillText(glyph.char, glyph.x, view.baseline);
+            c.globalCompositeOperation = 'source-over';
+          } else {
+            c.fillStyle = s.color;
+            c.fillText(glyph.char, glyph.x, view.baseline);
+          }
+          return { image, left, top };
+        };
+
+        const ensureLayout = s => {
+          const key = [
+            s.text,
+            family(s),
+            s.fontWeight,
+            s.fontSize,
+            s.letterSpacing,
+            s.color,
+            s.dashLength,
+            s.dashGap,
+            s.strokeWidth,
+            s.lineStyle,
+            width,
+            height,
+            dpr
+          ].join('|');
+          if (key === layoutKey && word) return word;
+          layoutKey = key;
+          const wanted = fontFor(s, 64);
+          if (document.fonts && wanted !== requestedFont) {
+            requestedFont = wanted;
+            document.fonts.load(wanted, s.text).then(refreshFonts, refreshFonts);
+          }
+
+          const probe = scratchCtx;
+          setFont(probe, s, s.fontSize);
+          let m = probe.measureText(s.text);
+          const inkWidth = (m.actualBoundingBoxLeft !== undefined && m.actualBoundingBoxRight !== undefined)
+            ? (m.actualBoundingBoxLeft + m.actualBoundingBoxRight)
+            : m.width;
+          const inkHeight = (m.actualBoundingBoxAscent !== undefined && m.actualBoundingBoxDescent !== undefined)
+            ? (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent)
+            : s.fontSize;
+          const fit = Math.min(
+            1,
+            (width * 0.9) / Math.max(inkWidth, 1),
+            (height * 0.66) / Math.max(inkHeight, 1)
+          );
+          const size = Math.max(8, s.fontSize * fit);
+          setFont(probe, s, size);
+          m = probe.measureText(s.text);
+          const finalInkWidth = (m.actualBoundingBoxLeft !== undefined && m.actualBoundingBoxRight !== undefined)
+            ? (m.actualBoundingBoxLeft + m.actualBoundingBoxRight)
+            : m.width;
+          const finalInkHeight = (m.actualBoundingBoxAscent !== undefined && m.actualBoundingBoxDescent !== undefined)
+            ? (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent)
+            : size;
+          const leftBound = m.actualBoundingBoxLeft ?? 0;
+          const ascentBound = m.actualBoundingBoxAscent ?? (size * 0.8);
+          const x = (width - finalInkWidth) / 2 + leftBound;
+          const baseline = (height - finalInkHeight) / 2 + ascentBound;
+          const next = {
+            size,
+            baseline,
+            left: x - leftBound,
+            right: x + (m.actualBoundingBoxRight ?? finalInkWidth),
+            top: baseline - ascentBound,
+            bottom: baseline + (m.actualBoundingBoxDescent ?? (size * 0.2))
+          };
+          word = next;
+
+          const chars = Array.from(s.text);
+          const previous = glyphs;
+          glyphs = [];
+          let prefix = '';
+          chars.forEach((char, i) => {
+            prefix += char;
+            const own = probe.measureText(char);
+            const gx = x + probe.measureText(prefix).width - own.width;
+            if (!char.trim()) return;
+            const base = {
+              char,
+              x: gx,
+              box: {
+                x1: gx - (own.actualBoundingBoxLeft ?? 0),
+                y1: baseline - (own.actualBoundingBoxAscent ?? (next.size * 0.8)),
+                x2: gx + (own.actualBoundingBoxRight ?? own.width),
+                y2: baseline + (own.actualBoundingBoxDescent ?? (next.size * 0.2))
+              }
+            };
+            const kept = previous[glyphs.length];
+            glyphs.push({
+              ...base,
+              offset: kept?.char === char ? kept.offset : { x: 0, y: 0 },
+              velocity: { x: 0, y: 0 },
+              outline: 0,
+              index: i,
+              fill: sprite(s, next, base, false),
+              dashes: sprite(s, next, base, true)
+            });
+          });
+          dragging = -1;
+          frame.index = -1;
+          return next;
+        };
+
+        const glyphAt = (x, y) => {
+          if (!word || y < word.top - 24 || y > word.bottom + 24) return -1;
+          let best = -1;
+          let bestDistance = Infinity;
+          glyphs.forEach((glyph, i) => {
+            const x1 = glyph.box.x1 + glyph.offset.x;
+            const x2 = glyph.box.x2 + glyph.offset.x;
+            const d = x < x1 ? x1 - x : x > x2 ? x - x2 : 0;
+            if (d < bestDistance) {
+              bestDistance = d;
+              best = i;
+            }
+          });
+          return bestDistance < 28 ? best : -1;
+        };
+
+        const falloff = (target, cx, cy, radius, strength, softness) => {
+          const inner = Math.min(1, Math.max(0, 1 - softness));
+          const safeRadius = Math.max(0.1, radius);
+          const gradient = target.createRadialGradient(cx, cy, 0, cx, cy, safeRadius);
+          gradient.addColorStop(0, `rgba(0, 0, 0, ${strength})`);
+          if (inner > 0.995) {
+            gradient.addColorStop(0.995, `rgba(0, 0, 0, ${strength})`);
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            return gradient;
+          }
+          for (let i = 0; i <= FALLOFF_STEPS; i++) {
+            const t = i / FALLOFF_STEPS;
+            const eased = t * t * (3 - 2 * t);
+            gradient.addColorStop(inner + (1 - inner) * t, `rgba(0, 0, 0, ${strength * (1 - eased)})`);
+          }
+          return gradient;
+        };
+
+        const blit = (target, art, dx, dy, originX, originY) => {
+          target.drawImage(
+            art.image,
+            Math.round((art.left + dx) * dpr - originX),
+            Math.round((art.top + dy) * dpr - originY)
+          );
+        };
+
+        const drawReveal = s => {
+          const radius = Math.max(1, s.reach * dpr);
+          const cx = lens.x * dpr;
+          const cy = lens.y * dpr;
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.fillStyle = falloff(ctx, cx, cy, radius, presence, s.softness);
+          ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+          ctx.globalCompositeOperation = 'source-over';
+
+          const x0 = Math.max(0, Math.floor(cx - radius));
+          const y0 = Math.max(0, Math.floor(cy - radius));
+          const x1 = Math.min(canvas.width, Math.ceil(cx + radius));
+          const y1 = Math.min(canvas.height, Math.ceil(cy + radius));
+          if (x1 <= x0 || y1 <= y0) return;
+          const w = x1 - x0;
+          const h = y1 - y0;
+          if (scratch.width < w || scratch.height < h) {
+            scratch.width = Math.max(scratch.width, w);
+            scratch.height = Math.max(scratch.height, h);
+          }
+          scratchCtx.setTransform(1, 0, 0, 1, 0, 0);
+          scratchCtx.globalCompositeOperation = 'source-over';
+          scratchCtx.clearRect(0, 0, w, h);
+          for (const glyph of glyphs) blit(scratchCtx, glyph.dashes, glyph.offset.x, glyph.offset.y, x0, y0);
+          scratchCtx.globalCompositeOperation = 'destination-in';
+          scratchCtx.fillStyle = falloff(scratchCtx, cx - x0, cy - y0, radius, 1, s.softness);
+          scratchCtx.fillRect(0, 0, w, h);
+          scratchCtx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = presence;
+          ctx.drawImage(scratch, 0, 0, w, h, x0, y0, w, h);
+          ctx.globalAlpha = 1;
+        };
+
+        const crisp = value => (Math.round(value * dpr) + 0.5) / dpr;
+
+        const perimeterPoint = (distance, w, h) => {
+          let d = ((distance % (2 * (w + h))) + 2 * (w + h)) % (2 * (w + h));
+          if (d < w) return [frame.x1 + d, frame.y1, 0, -1];
+          d -= w;
+          if (d < h) return [frame.x2, frame.y1 + d, 1, 0];
+          d -= h;
+          if (d < w) return [frame.x2 - d, frame.y2, 0, 1];
+          d -= w;
+          return [frame.x1, frame.y2 - d, -1, 0];
+        };
+
+        const drawSpecks = (s, a) => {
+          const w = frame.x2 - frame.x1;
+          const h = frame.y2 - frame.y1;
+          if (w < 2 || h < 2) return;
+          const perimeter = 2 * (w + h);
+          const seed = frame.index + 1;
+          const grid = 3;
+
+          for (let k = 0; k < s.specks; k++) {
+            const period = 0.5 + noise(seed, k, 11) * 1.2;
+            const t = pulse / period + noise(seed, k, 17);
+            const cycle = Math.floor(t);
+            const life = t - cycle;
+            if (life > 0.7) continue;
+            const [px, py, nx, ny] = perimeterPoint(noise(seed, k, cycle) * perimeter, w, h);
+            const pick = noise(seed, k, cycle, 2);
+            const size = pick < 0.46 ? 2 : pick < 0.7 ? 3 : pick < 0.84 ? 5 : pick < 0.94 ? 8 : 11;
+            const large = size >= 8;
+            const out = (large ? 9 : 4) + Math.floor(noise(seed, k, cycle, 1) * 5) * grid;
+            const x = frame.x1 + Math.round((px + nx * out - frame.x1) / grid) * grid;
+            const y = frame.y1 + Math.round((py + ny * out - frame.y1) / grid) * grid;
+            const tone = noise(seed, k, cycle, 3);
+            const blink = life < 0.06 || (life > 0.32 && life < 0.36) ? 0.35 : 1;
+            const alpha = a * (large ? 0.3 + 0.4 * tone : 0.3 + 0.6 * tone) * blink;
+            const left = Math.round(x - size / 2);
+            const top = Math.round(y - size / 2);
+            if (tone < 0.26 || (large && tone < 0.78)) {
+              ctx.strokeStyle = rgba(s.accentColor, alpha);
+              ctx.strokeRect(left + 0.5, top + 0.5, size, size);
+              if (large && tone > 0.5) {
+                ctx.fillStyle = rgba(s.accentColor, alpha);
+                ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+              }
+            } else {
+              ctx.fillStyle = rgba(s.accentColor, alpha);
+              ctx.fillRect(left, top, size, size);
+            }
+          }
+
+          for (let j = 0; j < 2; j++) {
+            const head = (pulse * 0.42 * s.speed + j * 0.5) * perimeter;
+            for (let i = 0; i < 4; i++) {
+              const [x, y] = perimeterPoint(head - i * 6, w, h);
+              const size = i === 0 ? 3 : 2;
+              ctx.fillStyle = rgba(s.accentColor, a * [0.95, 0.55, 0.32, 0.16][i]);
+              ctx.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+            }
+          }
+        };
+
+        const drawFrame = s => {
+          const glyph = glyphs[frame.index];
+          if (!glyph || frame.alpha < 0.01) return;
+          const a = frame.alpha;
+          const x1 = crisp(frame.x1);
+          const y1 = crisp(frame.y1);
+          const x2 = crisp(frame.x2);
+          const y2 = crisp(frame.y2);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+          const moved = Math.hypot(glyph.offset.x, glyph.offset.y);
+          if (moved > 1) {
+            const hx = (glyph.box.x1 + glyph.box.x2) / 2;
+            const hy = (glyph.box.y1 + glyph.box.y2) / 2;
+            ctx.beginPath();
+            ctx.moveTo(hx, hy);
+            ctx.lineTo(hx + glyph.offset.x, hy + glyph.offset.y);
+            ctx.setLineDash([3, 4]);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = rgba(s.accentColor, 0.45 * a);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.rect(Math.round(hx) - 2, Math.round(hy) - 2, 4, 4);
+            ctx.fillStyle = rgba(s.accentColor, 0.7 * a);
+            ctx.fill();
+          }
+
+          ctx.beginPath();
+          ctx.rect(x1, y1, x2 - x1, y2 - y1);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = rgba(s.accentColor, 0.5 * a);
+          ctx.stroke();
+
+          ctx.beginPath();
+          for (const [cx, cy] of [
+            [x1, y1],
+            [x2, y1],
+            [x2, y2],
+            [x1, y2]
+          ]) {
+            ctx.rect(Math.round(cx) - 2, Math.round(cy) - 2, 5, 5);
+          }
+          ctx.fillStyle = rgba(s.accentColor, 0.95 * a);
+          ctx.fill();
+
+          if (s.specks > 0) {
+            ctx.lineWidth = 1;
+            drawSpecks(s, a);
+          }
+
+          if (!s.labels) return;
+          ctx.font = LABEL_FONT;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillStyle = rgba(s.accentColor, 0.62 * a);
+          const label =
+            moved > 1
+              ? `${signed(Math.round(glyph.offset.x))}, ${signed(Math.round(-glyph.offset.y))}`
+              : `${glyph.char}  ${Math.round(glyph.box.x2 - glyph.box.x1)} × ${Math.round(glyph.box.y2 - glyph.box.y1)}`;
+          ctx.fillText(label, Math.round(frame.x1), Math.round(frame.y1) - 7);
+        };
+
+        const tick = now => {
+          raf = 0;
+          const s = settingsRef.current;
+          if (!s) return;
+          const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
+          last = now;
+          const view = ensureLayout(s);
+
+          const sweeping = s.sweep && !reducedMotion && !pointer.inside && dragging < 0;
+          if (sweeping) clock += dt * s.speed;
+          pulse += dt;
+          let targetX = pointer.x;
+          let targetY = pointer.y;
+          if (sweeping) {
+            targetX = view.left + (view.right - view.left) * (0.5 - 0.5 * Math.cos(clock * 0.45));
+            targetY = view.top + (view.bottom - view.top) * (0.45 + 0.1 * Math.sin(clock * 0.8));
+          }
+          const active = pointer.inside || sweeping || dragging >= 0;
+          if (active && !placed) {
+            lens.x = targetX;
+            lens.y = targetY;
+          }
+          if (active) {
+            const lag = pointer.inside ? 0.05 : 0.22;
+            lens.x = approach(lens.x, targetX, dt, lag);
+            lens.y = approach(lens.y, targetY, dt, lag);
+          }
+          placed = active;
+          presence = approach(presence, s.reveal === 'area' && active && dragging < 0 ? 1 : 0, dt, 0.16);
+
+          let moving = false;
+          glyphs.forEach((glyph, i) => {
+            if (i === dragging) {
+              glyph.offset.x = approach(glyph.offset.x, pointer.x - grab.x, dt, 0.03);
+              glyph.offset.y = approach(glyph.offset.y, pointer.y - grab.y, dt, 0.03);
+              glyph.velocity.x = 0;
+              glyph.velocity.y = 0;
+              moving = true;
+              return;
+            }
+            const { offset, velocity } = glyph;
+            if (Math.abs(offset.x) < 0.05 && Math.abs(offset.y) < 0.05 && Math.hypot(velocity.x, velocity.y) < 0.5) {
+              offset.x = 0;
+              offset.y = 0;
+              velocity.x = 0;
+              velocity.y = 0;
+              return;
+            }
+            velocity.x += (-SPRING * offset.x - DAMPING * velocity.x) * dt;
+            velocity.y += (-SPRING * offset.y - DAMPING * velocity.y) * dt;
+            offset.x += velocity.x * dt;
+            offset.y += velocity.y * dt;
+            moving = true;
+          });
+
+          const focus = dragging >= 0 ? dragging : active ? glyphAt(lens.x, lens.y) : -1;
+          if (focus >= 0 && s.selection) {
+            const glyph = glyphs[focus];
+            const bx1 = glyph.box.x1 + glyph.offset.x - 6;
+            const by1 = glyph.box.y1 + glyph.offset.y - 6;
+            const bx2 = glyph.box.x2 + glyph.offset.x + 6;
+            const by2 = glyph.box.y2 + glyph.offset.y + 6;
+            if (frame.index < 0 || frame.alpha < 0.02) {
+              frame.x1 = bx1;
+              frame.y1 = by1;
+              frame.x2 = bx2;
+              frame.y2 = by2;
+            }
+            const glide = focus === dragging ? 0.02 : 0.08;
+            frame.x1 = approach(frame.x1, bx1, dt, glide);
+            frame.y1 = approach(frame.y1, by1, dt, glide);
+            frame.x2 = approach(frame.x2, bx2, dt, glide);
+            frame.y2 = approach(frame.y2, by2, dt, glide);
+            frame.index = focus;
+          }
+          frame.alpha = approach(frame.alpha, focus >= 0 && s.selection ? 1 : 0, dt, 0.1);
+
+          glyphs.forEach((glyph, i) => {
+            const target = s.reveal === 'letter' && i === focus && i !== dragging ? 1 : 0;
+            glyph.outline = approach(glyph.outline, target, dt, 0.09);
+            if (Math.abs(glyph.outline - target) > 0.002) moving = true;
+            else glyph.outline = target;
+          });
+
+          if (s.draggable) container.style.cursor = dragging >= 0 ? 'grabbing' : focus >= 0 && pointer.inside ? 'grab' : '';
+
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          for (const glyph of glyphs) {
+            const moved = Math.hypot(glyph.offset.x, glyph.offset.y);
+            if (moved > 1) {
+              ctx.globalAlpha = Math.min(1, moved / 24) * 0.55;
+              blit(ctx, glyph.dashes, 0, 0, 0, 0);
+              ctx.globalAlpha = 1;
+            }
+          }
+          for (const glyph of glyphs) {
+            if (glyph.outline < 0.999) {
+              ctx.globalAlpha = 1 - glyph.outline;
+              blit(ctx, glyph.fill, glyph.offset.x, glyph.offset.y, 0, 0);
+            }
+            if (glyph.outline > 0.001) {
+              ctx.globalAlpha = glyph.outline;
+              blit(ctx, glyph.dashes, glyph.offset.x, glyph.offset.y, 0, 0);
+            }
+            ctx.globalAlpha = 1;
+          }
+          if (presence > 0.001) drawReveal(s);
+          drawFrame(s);
+
+          const settling =
+            moving ||
+            Math.abs(presence - (s.reveal === 'area' && active && dragging < 0 ? 1 : 0)) > 0.002 ||
+            (frame.alpha > 0.01 && frame.alpha < 0.99);
+          if ((active || settling) && visible && alive) raf = requestAnimationFrame(tick);
+        };
+
+        const wake = () => {
+          if (raf || !visible || !alive) return;
+          last = performance.now();
+          raf = requestAnimationFrame(tick);
+        };
+        wakeRef.current = wake;
+
+        const resize = () => {
+          width = Math.max(1, container.clientWidth);
+          height = Math.max(1, container.clientHeight);
+          dpr = Math.min(window.devicePixelRatio || 1, 2);
+          canvas.width = Math.round(width * dpr);
+          canvas.height = Math.round(height * dpr);
+          layoutKey = '';
+          wake();
+        };
+
+        const locate = e => {
+          const rect = container.getBoundingClientRect();
+          pointer.x = e.clientX - rect.left;
+          pointer.y = e.clientY - rect.top;
+        };
+        const onMove = e => {
+          locate(e);
+          pointer.inside = true;
+          wake();
+        };
+        const onLeave = () => {
+          if (dragging >= 0) return;
+          pointer.inside = false;
+          wake();
+        };
+        const onDown = e => {
+          locate(e);
+          pointer.inside = true;
+          const s = settingsRef.current;
+          if (s?.draggable && (e.pointerType !== 'mouse' || e.button === 0)) {
+            const index = glyphAt(pointer.x, pointer.y);
+            if (index >= 0) {
+              dragging = index;
+              grab.x = pointer.x - glyphs[index].offset.x;
+              grab.y = pointer.y - glyphs[index].offset.y;
+              container.setPointerCapture?.(e.pointerId);
+            }
+          }
+          wake();
+        };
+        const onUp = e => {
+          if (dragging >= 0) {
+            dragging = -1;
+            container.releasePointerCapture?.(e.pointerId);
+            const rect = container.getBoundingClientRect();
+            pointer.inside =
+              e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+          }
+          wake();
+        };
+
+        container.addEventListener('pointermove', onMove, { passive: true });
+        container.addEventListener('pointerenter', onMove, { passive: true });
+        container.addEventListener('pointerdown', onDown, { passive: true });
+        container.addEventListener('pointerup', onUp, { passive: true });
+        container.addEventListener('pointercancel', onUp, { passive: true });
+        container.addEventListener('pointerleave', onLeave, { passive: true });
+
+        const resizeObserver = new ResizeObserver(resize);
+        resizeObserver.observe(container);
+        const intersectionObserver = new IntersectionObserver(([entry]) => {
+          visible = entry.isIntersecting;
+          wake();
+        });
+        intersectionObserver.observe(container);
+        if (document.fonts) document.fonts.ready.then(refreshFonts, refreshFonts);
+
+        resize();
+
+        return () => {
+          alive = false;
+          cancelAnimationFrame(raf);
+          wakeRef.current = () => {};
+          resizeObserver.disconnect();
+          intersectionObserver.disconnect();
+          container.removeEventListener('pointermove', onMove);
+          container.removeEventListener('pointerenter', onMove);
+          container.removeEventListener('pointerdown', onDown);
+          container.removeEventListener('pointerup', onUp);
+          container.removeEventListener('pointercancel', onUp);
+          container.removeEventListener('pointerleave', onLeave);
+        };
+      }, []);
+
+      return (
+        <div ref={containerRef} className={`tech-text ${className}`.trim()} style={style} role="img" aria-label={text}>
+          <canvas ref={canvasRef} className="tech-text-canvas" />
+        </div>
+      );
+    };
+
+    function App() {
+      const [darkMode, setDarkMode] = useState(true);
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+      const [activeCategory, setActiveCategory] = useState('semua');
+      const [showCvModal, setShowCvModal] = useState(false);
+      const [typewriterIndex, setTypewriterIndex] = useState(0);
+
+      // TechText Interactive Showcase State
+      const [demoText, setDemoText] = useState('React Bits');
+      const [demoReveal, setDemoReveal] = useState('letter');
+      const [demoSpecks, setDemoSpecks] = useState(15);
+      const [demoSweep, setDemoSweep] = useState(true);
+
+      // Profile and logo image file references
+      const PROFILE_IMAGE_SRC = "WhatsApp Image 2026-10-07 at 21.57.22.jpeg";
+      const SCHOOL_LOGO_SRC = "foto profil.jpg";
+
+      // Form State
+      const [formData, setFormData] = useState({
+        nama: '',
+        email: '',
+        pesan: ''
+      });
+
+      const roles = [
+        'Siswa PPLG A SMKN 2 Surakarta',
+        'Full Stack Web Developer',
+        'PHP & MySQL Specialist',
+        'React Frontend Developer'
+      ];
+
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setTypewriterIndex((prev) => (prev + 1) % roles.length);
+        }, 2800);
+        return () => clearInterval(interval);
+      }, []);
+
+      useEffect(() => {
+        if (darkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }, [darkMode]);
+
+      const projectsData = [
+        {
+          id: 1,
+          title: 'Sistem Informasi Akademik Sekolah (SIAKAD)',
+          category: 'semua backend sekolah',
+          desc: 'Sistem rekapitulasi data siswa, nilai, absensi, dan jadwal pelajaran terintegrasi dengan otentikasi bertingkat.',
+          tech: ['PHP OOP', 'MySQL', 'Bootstrap 5', 'JavaScript'],
+          icon: 'school'
+        },
+        {
+          id: 2,
+          title: 'Aplikasi Kasir Toko & Persediaan (POS)',
+          category: 'semua backend web',
+          desc: 'Sistem kasir real-time dengan pencatatan otomatis transaksi, persediaan barang, serta laporan keuangan bulanan.',
+          tech: ['PHP', 'MySQL', 'Tailwind CSS', 'Chart.js'],
+          icon: 'point_of_sale'
+        },
+        {
+          id: 3,
+          title: 'Portofolio Interactive CV (React JS)',
+          category: 'semua frontend web',
+          desc: 'Aplikasi Web CV & Portofolio modern berbasis React JS dengan fitur Switch Theme (Terang/Gelap) dan Modal Preview CV.',
+          tech: ['React JS', 'Tailwind CSS', 'ES6 JavaScript'],
+          icon: 'web'
+        },
+        {
+          id: 4,
+          title: 'Aplikasi Peminjaman Inventaris Sekolah',
+          category: 'semua backend sekolah',
+          desc: 'Sistem manajemen peminjaman dan pencatatan sarana-prasarana laboratorium PPLG SMKN 2 Surakarta.',
+          tech: ['PHP Native', 'MySQL', 'REST API'],
+          icon: 'inventory'
+        }
+      ];
+
+      const filteredProjects = activeCategory === 'semua'
+        ? projectsData
+        : projectsData.filter(p => p.category.includes(activeCategory));
+
+      const handleFormSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.nama || !formData.pesan) {
+          alert('Mohon isi Nama dan Pesan Anda terlebih dahulu.');
+          return;
+        }
+        const text = encodeURIComponent(`Halo Aqsha, saya ${formData.nama} (${formData.email || 'Tanpa Kontak Email'}).\n\nPesan:\n${formData.pesan}`);
+        window.open(`https://wa.me/6285864051474?text=${text}`, '_blank');
+      };
+
+      return (
+        <div className={`min-h-screen transition-colors duration-300 font-sans ${darkMode ? 'bg-[#0f131d] text-[#dfe2f1]' : 'bg-slate-50 text-slate-900'
+          }`}>
+
+          <header className={`fixed top-0 left-0 w-full z-50 backdrop-blur-md border-b transition-colors duration-300 ${darkMode ? 'bg-[#1c1f2a]/90 border-slate-800' : 'bg-white/90 border-slate-200 shadow-sm'
+            }`}>
+            <div className="h-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between">
+
+              {/* Logo & Brand */}
+              <div className="flex items-center gap-3">
+                <div className="relative group">
+                  <img
+                    src={SCHOOL_LOGO_SRC}
+                    alt="Logo SMKN 2 Surakarta"
+                    className="h-11 w-11 object-cover rounded-xl border border-cyan-400/30 shadow-md group-hover:scale-105 transition-transform"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://placehold.co/100x100/0ea5e9/ffffff?text=SMKN2";
+                    }}
+                  />
+                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-[#1c1f2a] rounded-full"></span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-extrabold text-lg text-cyan-500 dark:text-cyan-400 tracking-wide font-heading">Aqsha Zhafif</span>
+                  <span className={`text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PPLG A • SMKN 2 Surakarta</span>
+                </div>
+              </div>
+
+              {/* Desktop Navigation Links */}
+              <nav className={`hidden md:flex items-center gap-1 px-4 py-1.5 rounded-full border ${darkMode ? 'bg-[#171b26]/80 border-slate-800' : 'bg-slate-100/80 border-slate-200'
+                }`}>
+                <a href="#about" className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${darkMode ? 'hover:bg-[#262a35] text-slate-200' : 'hover:bg-white text-slate-700 shadow-sm'}`}>Tentang</a>
+                <a href="#skills" className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${darkMode ? 'hover:bg-[#262a35] text-slate-200' : 'hover:bg-white text-slate-700 shadow-sm'}`}>Keahlian</a>
+                <a href="#techtext-demo" className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${darkMode ? 'hover:bg-[#262a35] text-cyan-400' : 'hover:bg-white text-cyan-600 shadow-sm'}`}>TechText</a>
+                <a href="#projects" className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${darkMode ? 'hover:bg-[#262a35] text-slate-200' : 'hover:bg-white text-slate-700 shadow-sm'}`}>Proyek</a>
+                <a href="#education" className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${darkMode ? 'hover:bg-[#262a35] text-slate-200' : 'hover:bg-white text-slate-700 shadow-sm'}`}>Pendidikan</a>
+                <a href="#contact" className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${darkMode ? 'hover:bg-[#262a35] text-slate-200' : 'hover:bg-white text-slate-700 shadow-sm'}`}>Kontak</a>
+              </nav>
+
+              {/* Action Header Items */}
+              <div className="flex items-center gap-3">
+                {/* Status Badge */}
+                <div className={`hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-mono font-medium ${darkMode ? 'bg-[#171b26] border-cyan-500/30 text-cyan-400' : 'bg-cyan-50 border-cyan-300 text-cyan-800'
+                  }`}>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                  </span>
+                  <span>Siap Magang / PKL</span>
+                </div>
+
+                {/* Theme Toggle Button */}
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-md ${darkMode ? 'bg-[#262a35] text-amber-400 hover:bg-[#313540]' : 'bg-white text-amber-600 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  title="Ganti Mode Terang/Gelap"
+                  aria-label="Ganti Mode Terang/Gelap"
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {darkMode ? 'light_mode' : 'dark_mode'}
+                  </span>
+                </button>
+
+                {/* CV Modal Toggle Button */}
+                <button
+                  onClick={() => setShowCvModal(true)}
+                  className="hidden sm:flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-md hover:shadow-cyan-500/20 active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-base">description</span>
+                  <span>Lihat CV</span>
+                </button>
+
+                {/* Mobile Hamburger Drawer Button */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className={`md:hidden p-2.5 rounded-xl ${darkMode ? 'bg-[#262a35] text-white' : 'bg-white text-slate-800 border border-slate-200 shadow-sm'}`}
+                  aria-label="Menu Navigasi Mobile"
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {mobileMenuOpen ? 'close' : 'menu'}
+                  </span>
+                </button>
+              </div>
+
+            </div>
+
+            {/* Mobile Navigation Dropdown */}
+            {mobileMenuOpen && (
+              <div className={`md:hidden px-6 py-4 border-b flex flex-col gap-3 ${darkMode ? 'bg-[#1c1f2a] border-slate-800' : 'bg-white border-slate-200 shadow-lg'
+                }`}>
+                <a href="#about" onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm font-semibold">Tentang</a>
+                <a href="#skills" onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm font-semibold">Keahlian</a>
+                <a href="#techtext-demo" onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm font-semibold text-cyan-400">TechText (Demo)</a>
+                <a href="#projects" onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm font-semibold">Proyek</a>
+                <a href="#education" onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm font-semibold">Pendidikan</a>
+                <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm font-semibold">Kontak</a>
+                <button
+                  onClick={() => { setShowCvModal(true); setMobileMenuOpen(false); }}
+                  className="w-full py-3 rounded-xl bg-cyan-500 text-slate-950 font-bold text-sm text-center shadow-md flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-lg">description</span>
+                  <span>Prinjau / Cetak CV</span>
+                </button>
+              </div>
+            )}
+          </header>
+
+          <section className="relative pt-32 pb-20 px-6 lg:px-12 max-w-7xl mx-auto min-h-[calc(100vh-5rem)] flex items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
+
+              {/* Main Hero Text Content */}
+              <div className="lg:col-span-7 flex flex-col items-start gap-6">
+                <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-semibold ${darkMode ? 'bg-[#171b26] border-slate-800 text-cyan-400' : 'bg-cyan-50 border-cyan-200 text-cyan-800'
+                  }`}>
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                  <span>Siswa Aktif PPLG A - SMKN 2 Surakarta</span>
+                </div>
+
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-widest text-slate-400 font-bold">Web Developer &amp; Programmer</span>
+                    <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                      React Bits &lt;TechText /&gt;
+                    </span>
+                  </div>
+
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-heading">
+                    Halo, Saya
+                  </h1>
+
+                  {/* Interactive TechText Component from React Bits */}
+                  <div className={`w-full h-28 sm:h-36 md:h-44 relative rounded-2xl border transition-all overflow-hidden ${
+                    darkMode 
+                      ? 'bg-[#141824]/90 border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)]' 
+                      : 'bg-white/90 border-cyan-200 shadow-md'
+                  }`}>
+                    <TechText
+                      text="Aqsha Zhafif"
+                      fontWeight={700}
+                      fontSize={110}
+                      fontFamily="Outfit, sans-serif"
+                      color={darkMode ? "#38bdf8" : "#0284c7"}
+                      accentColor={darkMode ? "#22d3ee" : "#0891b2"}
+                      reveal="letter"
+                      dashLength={4}
+                      dashGap={2}
+                      specks={15}
+                      selection={true}
+                      labels={true}
+                      draggable={true}
+                      sweep={true}
+                      speed={1}
+                    />
+                    <div className="absolute bottom-1.5 right-3 text-[10px] font-mono text-cyan-400/80 pointer-events-none select-none flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-xs">touch_app</span>
+                      <span>Hover / Drag hurufnya!</span>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Role Typewriter */}
+                  <div className="flex items-center gap-2 mt-2 font-mono text-lg sm:text-xl font-semibold">
+                    <span className="text-cyan-500 font-bold">&gt;</span>
+                    <span className={darkMode ? 'text-slate-200' : 'text-slate-700'}>{roles[typewriterIndex]}</span>
+                    <span className="w-2 h-6 bg-cyan-400 animate-pulse"></span>
+                  </div>
+                </div>
+
+                <p className={`text-base sm:text-lg max-w-2xl leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                  Siswa jurusan Pengembangan Perangkat Lunak &amp; Gim di SMK Negeri 2 Surakarta. Memiliki kompetensi kuat dalam backend web (PHP &amp; MySQL) serta frontend modern (React JS &amp; Tailwind CSS).
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <a
+                    href="https://wa.me/6285864051474"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg hover:shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+                  >
+                    <span className="material-symbols-outlined text-xl">chat</span>
+                    <span>Hubungi (WhatsApp)</span>
+                  </a>
+
+                  <button
+                    onClick={() => setShowCvModal(true)}
+                    className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm border transition-all hover:-translate-y-0.5 ${darkMode ? 'bg-[#262a35] border-slate-700 text-white hover:bg-[#313540]' : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100 shadow-sm'
+                      }`}
+                  >
+                    <span className="material-symbols-outlined text-xl">description</span>
+                    <span>Download CV</span>
+                  </button>
+                </div>
+
+                {/* Quick Contact Footer Strip */}
+                <div className="flex flex-wrap items-center gap-6 pt-4 text-xs font-mono text-slate-400 border-t border-slate-700/30 w-full">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-cyan-400 text-base">call</span>
+                    <span>085864051474</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-cyan-400 text-base">location_on</span>
+                    <span>Surakarta, Jawa Tengah</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Profile Frame with Exact Local Image Source */}
+              <div className="lg:col-span-5 flex justify-center relative">
+                <div className="relative w-72 sm:w-80 h-72 sm:h-80 rounded-full p-2 bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 shadow-2xl flex items-center justify-center">
+                  <div className={`w-full h-full rounded-full overflow-hidden p-1 relative ${darkMode ? 'bg-[#0f131d]' : 'bg-white'}`}>
+                    <img
+                      src={PROFILE_IMAGE_SRC}
+                      alt="Foto Aqsha Zhafif Aufa Wibowo"
+                      className="w-full h-full object-cover rounded-full hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/400x400/0ea5e9/ffffff?text=Aqsha+Zhafif";
+                      }}
+                    />
+                  </div>
+
+                  {/* Floating School Emblem Badge */}
+                  <div className="absolute -bottom-4 bg-white/95 dark:bg-[#1c1f2a]/95 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                    <img
+                      src={SCHOOL_LOGO_SRC}
+                      alt="Logo SMKN 2 Surakarta"
+                      className="h-9 w-9 object-cover rounded-lg border border-cyan-400/30"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/100x100/0ea5e9/ffffff?text=SMK";
+                      }}
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white">SMK Negeri 2 Surakarta</span>
+                      <span className="text-[11px] font-mono text-cyan-500 font-semibold">PPLG A • Rekayasa Web</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <section id="about" className={`py-20 px-6 lg:px-12 border-t ${darkMode ? 'bg-[#0a0e18]/60 border-slate-800' : 'bg-slate-100/80 border-slate-200'}`}>
+            <div className="max-w-7xl mx-auto flex flex-col gap-12">
+
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-mono text-cyan-400 font-semibold tracking-wider uppercase">01 // PROFIL RINGKAS</span>
+                <h2 className="text-3xl font-extrabold tracking-tight font-heading">Tentang Aqsha Zhafif</h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                {/* Bio Card */}
+                <div className={`lg:col-span-7 p-8 rounded-2xl border shadow-lg flex flex-col justify-between gap-6 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                  <div className="flex flex-col gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-400/10 text-cyan-400 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-2xl">person</span>
+                    </div>
+                    <h3 className="text-xl font-bold font-heading">Pengembangan Perangkat Lunak &amp; Gim (PPLG)</h3>
+                    <p className={`leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Saya adalah siswa kelas PPLG A di SMK Negeri 2 Surakarta yang berfokus pada perancangan dan pembuatan aplikasi web.
+                    </p>
+                    <p className={`leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Memiliki ketertarikan mendalam pada arsitektur database MySQL, pemrograman terstruktur PHP, serta pembuatan antarmuka modern yang cepat dan responsif menggunakan Tailwind CSS dan React JS.
+                    </p>
+                  </div>
+
+                  <div className={`p-4 rounded-xl flex items-center gap-3 border ${darkMode ? 'bg-[#1c1f2a] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="material-symbols-outlined text-cyan-400 text-xl">verified</span>
+                    <span className="text-xs font-mono">Prinsip: Kode Terstruktur, Efisien, &amp; Tampilan Bersih.</span>
+                  </div>
+                </div>
+
+                {/* Quick Stat Cards */}
+                <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className={`p-6 rounded-2xl border shadow-md flex flex-col justify-between ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                    }`}>
+                    <span className="material-symbols-outlined text-cyan-400 text-3xl mb-4">school</span>
+                    <div>
+                      <span className="text-xs text-slate-400 uppercase font-mono">Sekolah</span>
+                      <h4 className="font-bold text-base mt-1">SMKN 2 Surakarta</h4>
+                      <p className="text-xs text-slate-500 mt-1">Jurusan PPLG A</p>
+                    </div>
+                  </div>
+
+                  <div className={`p-6 rounded-2xl border shadow-md flex flex-col justify-between ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                    }`}>
+                    <span className="material-symbols-outlined text-indigo-400 text-3xl mb-4">code</span>
+                    <div>
+                      <span className="text-xs text-slate-400 uppercase font-mono">Fokus Keahlian</span>
+                      <h4 className="font-bold text-base mt-1">Web Development</h4>
+                      <p className="text-xs text-slate-500 mt-1">PHP, MySQL, React JS</p>
+                    </div>
+                  </div>
+
+                  <div className={`p-6 rounded-2xl border shadow-md flex flex-col justify-between ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                    }`}>
+                    <span className="material-symbols-outlined text-emerald-400 text-3xl mb-4">call</span>
+                    <div>
+                      <span className="text-xs text-slate-400 uppercase font-mono">WhatsApp</span>
+                      <h4 className="font-bold text-sm mt-1">085864051474</h4>
+                      <p className="text-xs text-slate-500 mt-1">Respon Cepat</p>
+                    </div>
+                  </div>
+
+                  <div className={`p-6 rounded-2xl border shadow-md flex flex-col justify-between ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                    }`}>
+                    <span className="material-symbols-outlined text-amber-400 text-3xl mb-4">location_on</span>
+                    <div>
+                      <span className="text-xs text-slate-400 uppercase font-mono">Lokasi</span>
+                      <h4 className="font-bold text-base mt-1">Surakarta</h4>
+                      <p className="text-xs text-slate-500 mt-1">Jawa Tengah</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <section id="skills" className="py-20 px-6 lg:px-12 max-w-7xl mx-auto">
+            <div className="flex flex-col gap-12">
+
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-mono text-cyan-400 font-semibold tracking-wider uppercase">02 // KOMPETENSI TEKNIS</span>
+                <h2 className="text-3xl font-extrabold tracking-tight font-heading">Keahlian Utama</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                {/* React JS Card */}
+                <div className={`p-6 rounded-2xl border shadow-lg flex flex-col gap-4 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-cyan-400/10 text-cyan-400 flex items-center justify-center font-bold">
+                        <span className="material-symbols-outlined text-2xl">widgets</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">React JS</h3>
+                        <span className="text-xs text-slate-400 font-mono">Frontend Framework</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-400/10 px-2.5 py-1 rounded-full">85%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-cyan-400 h-full rounded-full" style={{ width: '85%' }}></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>JSX Components</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Hooks State</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Web Apps</span>
+                  </div>
+                </div>
+
+                {/* PHP Card */}
+                <div className={`p-6 rounded-2xl border shadow-lg flex flex-col gap-4 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl">code_blocks</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">PHP</h3>
+                        <span className="text-xs text-slate-400 font-mono">Backend Logic</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-400/10 px-2.5 py-1 rounded-full">88%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-indigo-400 h-full rounded-full" style={{ width: '88%' }}></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>OOP PHP</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Session Auth</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>CRUD System</span>
+                  </div>
+                </div>
+
+                {/* MySQL Card */}
+                <div className={`p-6 rounded-2xl border shadow-lg flex flex-col gap-4 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl">database</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">MySQL</h3>
+                        <span className="text-xs text-slate-400 font-mono">Database Relasional</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full">85%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-amber-400 h-full rounded-full" style={{ width: '85%' }}></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>ERD Modeling</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>JOIN Query</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Foreign Keys</span>
+                  </div>
+                </div>
+
+                {/* HTML & Tailwind CSS Card */}
+                <div className={`p-6 rounded-2xl border shadow-lg flex flex-col gap-4 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl">html</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">HTML &amp; Tailwind</h3>
+                        <span className="text-xs text-slate-400 font-mono">Styling &amp; Layout</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full">92%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-emerald-400 h-full rounded-full" style={{ width: '92%' }}></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Tailwind CSS</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Responsive UI</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Flex &amp; Grid</span>
+                  </div>
+                </div>
+
+                {/* Version Control Git Card */}
+                <div className={`p-6 rounded-2xl border shadow-lg flex flex-col gap-4 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl">terminal</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">Git &amp; GitHub</h3>
+                        <span className="text-xs text-slate-400 font-mono">Version Control</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-purple-400 bg-purple-400/10 px-2.5 py-1 rounded-full">88%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-purple-400 h-full rounded-full" style={{ width: '88%' }}></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Repository Git</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>Branching</span>
+                    <span className={`px-2.5 py-1 rounded-lg ${darkMode ? 'bg-[#262a35]' : 'bg-slate-100'}`}>GitHub Workflow</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <section id="projects" className={`py-20 px-6 lg:px-12 border-t ${darkMode ? 'bg-[#0a0e18]/60 border-slate-800' : 'bg-slate-100/80 border-slate-200'}`}>
+            <div className="max-w-7xl mx-auto flex flex-col gap-10">
+
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-mono text-cyan-400 font-semibold tracking-wider uppercase">03 // HASIL KARYA</span>
+                  <h2 className="text-3xl font-extrabold tracking-tight font-heading">Proyek Web Pilihan</h2>
+                </div>
+
+                {/* Category Filter Controls */}
+                <div className={`flex flex-wrap gap-1 p-1 rounded-xl border ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                  {['semua', 'backend', 'frontend', 'sekolah'].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${activeCategory === cat
+                        ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                        : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Project Cards Display Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    className={`p-6 rounded-2xl border shadow-xl flex flex-col justify-between transition-all hover:-translate-y-1 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                      }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-400/10 text-cyan-400 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-2xl">{project.icon}</span>
+                        </div>
+                        <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-cyan-400/10 text-cyan-500 font-semibold">
+                          Web System
+                        </span>
+                      </div>
+
+                      <h3 className="font-bold text-xl mb-2 font-heading">{project.title}</h3>
+                      <p className={`text-sm leading-relaxed mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        {project.desc}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 pt-4 border-t border-slate-700/20">
+                      {project.tech.map((t, idx) => (
+                        <span key={idx} className="text-[11px] font-mono px-2.5 py-1 rounded bg-cyan-500/10 text-cyan-400 font-medium">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </section>
+
+          {/* TechText Interactive Showcase Section */}
+          <section id="techtext-demo" className={`py-20 px-6 lg:px-12 border-t ${darkMode ? 'bg-[#0b0e17] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+            <div className="max-w-7xl mx-auto flex flex-col gap-8">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono font-medium w-fit">
+                    <span className="material-symbols-outlined text-sm">terminal</span>
+                    <span>React Bits Showcase</span>
+                  </div>
+                  <h2 className="text-3xl font-extrabold tracking-tight font-heading">
+                    Demo Interaktif: &lt;TechText /&gt;
+                  </h2>
+                  <p className={`text-sm max-w-2xl leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    Komponen teks futuristik dari React Bits dengan efek garis blueprint dashed/solid, partikel specks dinamis, pelacak kursor otomatis (sweep), dan huruf yang dapat ditarik lepas dari baseline (spring physics)!
+                  </p>
+                </div>
+
+                <a 
+                  href="#contact" 
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-mono font-semibold hover:bg-cyan-500 hover:text-slate-950 transition-all self-start sm:self-auto"
+                >
+                  <span className="material-symbols-outlined text-base">code</span>
+                  <span>Siap Pakai untuk Proyek Web</span>
+                </a>
+              </div>
+
+              {/* Interactive Stage & Controls */}
+              <div className={`p-6 sm:p-8 rounded-3xl border shadow-2xl flex flex-col gap-6 ${
+                darkMode ? 'bg-[#151926] border-slate-800' : 'bg-white border-slate-200'
+              }`}>
+                {/* Controls Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-700/20">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="text-xs font-mono font-semibold uppercase text-slate-400">Teks Kata:</label>
+                    <input 
+                      type="text" 
+                      value={demoText}
+                      onChange={(e) => setDemoText(e.target.value)}
+                      placeholder="Ketik teks di sini..." 
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-mono border focus:outline-none focus:border-cyan-400 transition-colors ${
+                        darkMode ? 'bg-[#1c2130] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}
+                    />
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {['React Bits', 'Aqsha Zhafif', 'Web Developer', 'PPLG SMKN 2'].map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => setDemoText(tag)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all ${
+                            demoText === tag 
+                              ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-sm' 
+                              : darkMode ? 'bg-[#202536] border-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-mono font-semibold uppercase text-slate-400">Reveal:</label>
+                      <div className={`flex rounded-xl p-0.5 border ${darkMode ? 'bg-[#1c2130] border-slate-700' : 'bg-slate-100 border-slate-300'}`}>
+                        {['letter', 'area', 'off'].map(mode => (
+                          <button
+                            key={mode}
+                            onClick={() => setDemoReveal(mode)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-mono capitalize transition-all ${
+                              demoReveal === mode
+                                ? 'bg-cyan-500 text-slate-950 font-bold shadow'
+                                : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            {mode}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setDemoSweep(!demoSweep)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono border transition-all flex items-center gap-1.5 ${
+                        demoSweep 
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                          : darkMode ? 'bg-[#1c2130] text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-300'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">{demoSweep ? 'check_circle' : 'motion_photos_off'}</span>
+                      <span>Sweep: {demoSweep ? 'ON' : 'OFF'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 420px Canvas Stage matching React Bits Example */}
+                <div 
+                  style={{ width: '100%', height: '420px', position: 'relative' }}
+                  className={`rounded-2xl border overflow-hidden ${
+                    darkMode ? 'bg-[#0d1017] border-cyan-500/20 shadow-inner' : 'bg-[#0f131d] border-slate-800 shadow-inner'
+                  }`}
+                >
+                  <TechText
+                    text={demoText || 'React Bits'}
+                    fontWeight={600}
+                    fontSize={140}
+                    fontFamily="Outfit, sans-serif"
+                    reveal={demoReveal}
+                    dashLength={4}
+                    dashGap={2}
+                    specks={demoSpecks}
+                    color="#ffffff"
+                    accentColor="#22d3ee"
+                    selection={true}
+                    labels={true}
+                    draggable={true}
+                    sweep={demoSweep}
+                    speed={1}
+                  />
+
+                  {/* Stage Badge & Quick Tip */}
+                  <div className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-cyan-400/30 text-xs font-mono text-cyan-400 pointer-events-none select-none flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                    <span>Canvas: 100% × 420px</span>
+                  </div>
+
+                  <div className="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-slate-700/60 text-xs font-mono text-slate-300 pointer-events-none select-none flex items-center gap-2">
+                    <span className="material-symbols-outlined text-cyan-400 text-sm">swipe</span>
+                    <span>Tarik huruf ke atas/bawah untuk melihat efek pegas (spring)</span>
+                  </div>
+                </div>
+
+                {/* Props Info Table Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono pt-2">
+                  <div className={`p-3 rounded-xl border ${darkMode ? 'bg-[#1a1f2e] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="text-slate-400 block text-[10px]">REVEAL MODE</span>
+                    <span className="font-bold text-cyan-400">{demoReveal}</span>
+                  </div>
+                  <div className={`p-3 rounded-xl border ${darkMode ? 'bg-[#1a1f2e] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="text-slate-400 block text-[10px]">DASH / GAP</span>
+                    <span className="font-bold text-cyan-400">4px / 2px</span>
+                  </div>
+                  <div className={`p-3 rounded-xl border ${darkMode ? 'bg-[#1a1f2e] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="text-slate-400 block text-[10px]">SPECKS COUNT</span>
+                    <span className="font-bold text-cyan-400">{demoSpecks} Partikel</span>
+                  </div>
+                  <div className={`p-3 rounded-xl border ${darkMode ? 'bg-[#1a1f2e] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="text-slate-400 block text-[10px]">PHYSICS</span>
+                    <span className="font-bold text-emerald-400">Draggable Spring</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <section id="education" className="py-20 px-6 lg:px-12 max-w-7xl mx-auto">
+            <div className="flex flex-col gap-12">
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-mono text-cyan-400 font-semibold tracking-wider uppercase">04 // RIWAYAT</span>
+                <h2 className="text-3xl font-extrabold tracking-tight font-heading">Pendidikan &amp; Pengalaman</h2>
+              </div>
+
+              <div className="relative border-l-2 border-cyan-400/30 ml-4 pl-8 flex flex-col gap-10">
+
+                {/* Timeline Entry 1 */}
+                <div className="relative">
+                  <span className="absolute -left-[41px] top-1.5 w-4 h-4 rounded-full bg-cyan-400 border-4 border-[#0f131d]"></span>
+                  <span className="text-xs font-mono text-cyan-400 font-bold">2023 - SEKARANG</span>
+                  <h3 className="text-xl font-bold mt-1 font-heading">SMK Negeri 2 Surakarta</h3>
+                  <p className="text-sm font-semibold text-slate-400">Pengembangan Perangkat Lunak dan Gim (PPLG A)</p>
+                  <p className={`text-sm mt-2 leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    Fokus pembelajaran pada pemrograman web backend (PHP &amp; MySQL), pembuatan UI frontend responsif (React JS &amp; Tailwind CSS), rekayasa perangkat lunak, serta pengerjaan proyek praktik kejuruan.
+                  </p>
+                </div>
+
+                {/* Timeline Entry 2 */}
+                <div className="relative">
+                  <span className="absolute -left-[41px] top-1.5 w-4 h-4 rounded-full bg-indigo-400 border-4 border-[#0f131d]"></span>
+                  <span className="text-xs font-mono text-indigo-400 font-bold">PRAKTIK &amp; TUGAS TIM</span>
+                  <h3 className="text-xl font-bold mt-1 font-heading">Pengembang Web Aplikasi Sekolah</h3>
+                  <p className="text-sm font-semibold text-slate-400">SMKN 2 Surakarta</p>
+                  <p className={`text-sm mt-2 leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    Membuat berbagai modul sistem informasi sekolah, peminjaman barang inventaris, hingga sistem transaksi kasir berbasis PHP dan MySQL.
+                  </p>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <section id="contact" className={`py-20 px-6 lg:px-12 border-t ${darkMode ? 'bg-[#0a0e18]' : 'bg-slate-100 border-slate-200'}`}>
+            <div className="max-w-4xl mx-auto flex flex-col gap-10">
+
+              <div className="text-center flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-3xl">chat</span>
+                </div>
+                <h2 className="text-3xl font-extrabold tracking-tight font-heading">Hubungi Aqsha Zhafif</h2>
+                <p className={`text-sm max-w-lg ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                  Kirim pesan langsung ke WhatsApp saya (<strong className="text-emerald-500 font-mono">085864051474</strong>) untuk diskusi proyek web, tawaran PKL / Magang industri, atau informasi lainnya.
+                </p>
+              </div>
+
+              <form onSubmit={handleFormSubmit} className={`p-8 rounded-3xl border shadow-xl flex flex-col gap-6 ${darkMode ? 'bg-[#171b26] border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold font-mono uppercase">NAMA LENGKAP</label>
+                    <input
+                      type="text"
+                      placeholder="Masukkan nama Anda"
+                      value={formData.nama}
+                      onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                      className={`px-4 py-3 rounded-xl border text-sm outline-none transition-all ${darkMode ? 'bg-[#0f131d] border-slate-800 focus:border-cyan-400 text-white' : 'bg-slate-50 border-slate-300 focus:border-cyan-500 text-slate-900'
+                        }`}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold font-mono uppercase">EMAIL / NO. HANDPHONE</label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: 08123456789 atau email@domain.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className={`px-4 py-3 rounded-xl border text-sm outline-none transition-all ${darkMode ? 'bg-[#0f131d] border-slate-800 focus:border-cyan-400 text-white' : 'bg-slate-50 border-slate-300 focus:border-cyan-500 text-slate-900'
+                        }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold font-mono uppercase">PESAN ANDA</label>
+                  <textarea
+                    rows="4"
+                    placeholder="Tuliskan pesan atau keperluan Anda di sini..."
+                    value={formData.pesan}
+                    onChange={(e) => setFormData({ ...formData, pesan: e.target.value })}
+                    className={`px-4 py-3 rounded-xl border text-sm outline-none transition-all ${darkMode ? 'bg-[#0f131d] border-slate-800 focus:border-cyan-400 text-white' : 'bg-slate-50 border-slate-300 focus:border-cyan-500 text-slate-900'
+                      }`}
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+                >
+                  <span className="material-symbols-outlined text-xl">send</span>
+                  <span>Kirim Pesan ke WhatsApp (085864051474)</span>
+                </button>
+              </form>
+
+            </div>
+          </section>
+
+          <footer className={`py-8 px-6 lg:px-12 border-t text-center text-xs font-mono ${darkMode ? 'bg-[#0f131d] border-slate-800 text-slate-500' : 'bg-white border-slate-200 text-slate-600'
+            }`}>
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={SCHOOL_LOGO_SRC}
+                  alt="Logo SMKN 2 Solo"
+                  className="h-6 w-6 object-cover rounded-md"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://placehold.co/100x100/0ea5e9/ffffff?text=SMK";
+                  }}
+                />
+                <span>&copy; {new Date().getFullYear()} Aqsha Zhafif Aufa Wibowo • SMKN 2 Surakarta</span>
+              </div>
+              <div>
+                <span>Dibuat Menggunakan React JS &amp; Tailwind CSS</span>
+              </div>
+            </div>
+          </footer>
+
+          {showCvModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+              <div
+                id="cv-modal-content"
+                className={`max-w-2xl w-full rounded-3xl p-6 sm:p-8 border shadow-2xl flex flex-col gap-6 max-h-[90vh] overflow-y-auto my-auto ${darkMode ? 'bg-[#171b26] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
+              >
+
+                {/* CV Modal Header */}
+                <div className="flex items-center justify-between border-b pb-4 border-slate-700/20">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={PROFILE_IMAGE_SRC}
+                      alt="Foto Profile Aqsha"
+                      className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/100x100/0ea5e9/ffffff?text=Aqsha";
+                      }}
+                    />
+                    <div>
+                      <h3 className="font-bold text-lg font-heading">Curriculum Vitae (CV)</h3>
+                      <p className="text-xs text-cyan-400 font-mono">Aqsha Zhafif Aufa Wibowo</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowCvModal(false)}
+                    className="no-print p-1.5 rounded-lg hover:bg-slate-700/30 text-slate-400 hover:text-white transition-colors"
+                    aria-label="Tutup Modal CV"
+                  >
+                    <span className="material-symbols-outlined text-2xl">close</span>
+                  </button>
+                </div>
+
+                {/* CV Details Content */}
+                <div className="flex flex-col gap-5 text-xs sm:text-sm">
+                  <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-cyan-400 text-sm">Status Sekolah &amp; Jurusan</p>
+                      <p className="font-medium">SMK Negeri 2 Surakarta — PPLG A</p>
+                    </div>
+                    <img
+                      src={SCHOOL_LOGO_SRC}
+                      alt="Logo SMKN 2 Solo"
+                      className="h-10 w-10 object-cover rounded-lg"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/100x100/0ea5e9/ffffff?text=SMK";
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold uppercase font-mono text-cyan-400 mb-1">Kontak WhatsApp &amp; Alamat:</h4>
+                    <p>• Nomor Kontak: 085864051474 (WhatsApp)</p>
+                    <p>• Lokasi: Surakarta, Jawa Tengah, Indonesia</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold uppercase font-mono text-cyan-400 mb-1">Ringkasan Profil:</h4>
+                    <p className="leading-relaxed">
+                      Siswa PPLG A SMKN 2 Surakarta berdedikasi tinggi dengan fokus utama pada pemrograman aplikasi web. Terbiasa membangun backend dengan PHP dan database MySQL, serta merancang antarmuka frontend interaktif menggunakan React JS dan Tailwind CSS.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold uppercase font-mono text-cyan-400 mb-1">Kompetensi Teknis:</h4>
+                    <p>• Pemrograman Backend: PHP OOP, Relasional Database MySQL, Session Auth</p>
+                    <p>• Pemrograman Frontend: React JS, Tailwind CSS, ES6 JavaScript, HTML5</p>
+                    <p>• Perangkat Kerja: Git &amp; GitHub Version Control</p>
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div className="no-print flex items-center justify-end gap-3 pt-4 border-t border-slate-700/20">
+                  <button
+                    onClick={() => window.print()}
+                    className="px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 transition-all flex items-center gap-1.5 shadow-md active:scale-95"
+                  >
+                    <span className="material-symbols-outlined text-base">print</span>
+                    <span>Cetak / Simpan PDF</span>
+                  </button>
+                  <button
+                    onClick={() => setShowCvModal(false)}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-colors ${darkMode ? 'bg-[#262a35] border-slate-700 hover:bg-[#313540]' : 'bg-slate-100 border-slate-300 hover:bg-slate-200'
+                      }`}
+                  >
+                    Tutup
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+
+</html>
